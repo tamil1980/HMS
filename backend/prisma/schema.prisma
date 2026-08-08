@@ -1,0 +1,805 @@
+// Prisma schema for Hospital Management System on TiDB (MySQL dialect)
+// Covers 20 modules: Dashboard, Login, User Management, Patient Registration,
+// Appointment, OP, IP, Doctor Management, Nurse Management, Ward/Room,
+// Pharmacy, Laboratory, Radiology, Billing, Payment, Insurance, Inventory,
+// Employee, Reports, Settings.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---- Business ID sequence counters (replaces Mongoose pre('save') hooks) ----
+model Counter {
+  key   String @id
+  value Int    @default(0)
+}
+
+// ---- Users (Module 2/3: Login, User Management) ----
+// role: admin | doctor | nurse | receptionist | lab | pharmacy | accountant | staff
+model User {
+  id                   Int       @id @default(autoincrement())
+  name                 String
+  email                String    @unique
+  phone                String?
+  password             String
+  role                 String    @default("staff")
+  isActive             Boolean   @default(true)
+  authToken            String?   @unique
+  forgotPasswordToken  String?
+  forgotPasswordExpiry DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+// ---- Patients (Module 4: Patient Registration) ----
+model Patient {
+  id             Int      @id @default(autoincrement())
+  patientId      String?  @unique
+  name           String
+  phone          String
+  email          String?
+  age            Float
+  gender         String // Male | Female | Other
+  address        String?
+  bloodGroup     String?
+  dob            DateTime?
+  qrCode         String?  @db.Text
+  guardians      Json     @default("[]")
+  medicalHistory Json     @default("[]")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  appointments     Appointment[]
+  caseSheets       CaseSheet[]
+  invoices         Invoice[]
+  labBills         LabBill[]
+  pharmacyBills    PharmacyBill[]
+  pharmacyReturns  PharmacyReturn[]
+  labResults       LabResult[]
+  ipAdmissions     IPAdmission[]
+  ipBills          IPBill[]
+  ipCaseSheets     IPCaseSheet[]
+  radiologyBills   RadiologyBill[]
+  radiologyReports RadiologyReport[]
+  insuranceClaims  InsuranceClaim[]
+  payments         Payment[]
+}
+
+// ---- Doctors / Consultants (Module 8: Doctor Management) ----
+model Consultant {
+  id              Int      @id @default(autoincrement())
+  name            String
+  department      String?
+  specialization  String
+  qualification   String?
+  phone           String
+  email           String?
+  registrationNumber String?
+  consultationFee Float    @default(0)
+  followUpFee     Float    @default(0)
+  schedule        Json     @default("[]")
+  availability    Json     @default("{}")
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  appointments          Appointment[]
+  caseSheets            CaseSheet[]
+  pharmacyBills         PharmacyBill[]
+  ipAdmissions          IPAdmission[]
+  ipCaseSheets          IPCaseSheet[]
+  ipDischargeSummaries  IPDischargeSummary[]
+  leaves                DoctorLeave[]
+}
+
+// Doctor leave records (Module 8: Leave)
+model DoctorLeave {
+  id        Int         @id @default(autoincrement())
+  doctorId  Int
+  doctor    Consultant  @relation(fields: [doctorId], references: [id])
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  status    String      @default("Pending") // Pending | Approved | Rejected | Cancelled
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+// ---- Nurses (Module 9: Nurse Management) ----
+model Nurse {
+  id           Int      @id @default(autoincrement())
+  nurseId      String?  @unique
+  name         String
+  code         String?
+  qualification String?
+  phone        String?
+  email        String?
+  department   String?
+  joinDate     DateTime?
+  dutySchedule Json     @default("[]")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ---- Ward / Room / Bed (Module 10: Ward/Room) ----
+model Ward {
+  id        Int       @id @default(autoincrement())
+  name      String
+  type      String    @default("General") // General | Private | Semi-Private | ICU | Emergency | Other
+  floor     String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  rooms      Room[]
+  admissions IPAdmission[]
+}
+
+model Room {
+  id         Int       @id @default(autoincrement())
+  wardId     Int
+  ward       Ward      @relation(fields: [wardId], references: [id])
+  roomNumber String
+  type       String    @default("General")
+  rate       Float     @default(0)
+  capacity   Int       @default(1)
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  beds       Bed[]
+  admissions IPAdmission[]
+}
+
+model Bed {
+  id         Int       @id @default(autoincrement())
+  roomId     Int
+  room       Room      @relation(fields: [roomId], references: [id])
+  bedNumber  String
+  status     String    @default("Available") // Available | Occupied | Maintenance
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  admissions IPAdmission[]
+}
+
+// ---- Suppliers (Module 17: Inventory) ----
+model Supplier {
+  id         Int      @id @default(autoincrement())
+  supplierId String?  @unique
+  company    String?
+  name       String
+  phone      String?
+  email      String?
+  address    String?
+  gstNumber  String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  grns GRN[]
+}
+
+// ---- Medicines (Module 11: Pharmacy / 17: Inventory) ----
+model Medicine {
+  id            Int       @id @default(autoincrement())
+  medicineId    String?   @unique
+  code          String?
+  name          String
+  genericName   String?
+  category      String?
+  unit          String    @default("Strip")
+  purchasePrice Float     @default(0)
+  salePrice     Float     @default(0)
+  gstRate       Float     @default(0)
+  quantity      Float     @default(0)
+  reorderLevel  Float     @default(0)
+  expiryDate    DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ---- Masters ----
+model Master {
+  id          Int       @id @default(autoincrement())
+  type        String // Department | Service | Medicine | Investigation | Category | PaymentMode | Other
+  code        String?
+  name        String
+  description String?
+  price       Float?
+  quantity    Float     @default(0)
+  expiryDate  DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([type, code])
+}
+
+// ---- Lab Tests (Module 12: Laboratory) ----
+model LabTest {
+  id             Int      @id @default(autoincrement())
+  testId         String?  @unique
+  name           String
+  category       String   @default("Test")
+  department     String?
+  price          Float    @default(0)
+  gstRate        Float    @default(0)
+  sampleType     String?
+  unit           String?
+  referenceRange String?
+  defaultResult  String?
+  turnaroundTime String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ---- Appointments (Module 5: Appointment) ----
+model Appointment {
+  id              Int       @id @default(autoincrement())
+  appointmentId   String?   @unique
+  patientId       Int
+  patient         Patient   @relation(fields: [patientId], references: [id])
+  consultantId    Int
+  consultant      Consultant @relation(fields: [consultantId], references: [id])
+  appointmentDate DateTime
+  appointmentTime String
+  type            String    @default("New") // New | Follow-up
+  status          String    @default("Scheduled") // Scheduled | Completed | Cancelled | No-Show
+  notes           String?
+  tokenNumber     Int?
+  reminderSentAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  invoices  Invoice[]
+  labBills  LabBill[]
+  caseSheets CaseSheet[]
+}
+
+// ---- OP Case Sheets (Module 6: OP) ----
+model CaseSheet {
+  id              Int         @id @default(autoincrement())
+  caseSheetId     String?     @unique
+  patientId       Int
+  patient         Patient     @relation(fields: [patientId], references: [id])
+  consultantId    Int
+  consultant      Consultant  @relation(fields: [consultantId], references: [id])
+  appointmentId   Int?
+  appointment     Appointment? @relation(fields: [appointmentId], references: [id])
+  date            DateTime    @default(now())
+  complaints      String?
+  history         String?
+  examination     String?
+  diagnosis       String?
+  investigations  Json        @default("[]")
+  vitals          Json?
+  prescriptions   Json        @default("[]")
+  advice          String?
+  nextVisit       DateTime?
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  invoices Invoice[]
+}
+
+// ---- OP Invoices (Module 14: Billing) ----
+model Invoice {
+  id            Int         @id @default(autoincrement())
+  invoiceId     String?     @unique
+  patientId     Int
+  patient       Patient     @relation(fields: [patientId], references: [id])
+  appointmentId Int?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  caseSheetId   Int?
+  caseSheet     CaseSheet?  @relation(fields: [caseSheetId], references: [id])
+  invoiceDate   DateTime    @default(now())
+  items         Json        @default("[]")
+  subtotal      Float
+  discount      Float       @default(0)
+  discountType  String      @default("fixed") // percentage | fixed
+  tax           Float       @default(0)
+  taxRate       Float       @default(0)
+  grandTotal    Float
+  amountPaid    Float       @default(0)
+  amountDue     Float       @default(0)
+  payments      Json        @default("[]")
+  status        String      @default("Unpaid") // Paid | Partial | Unpaid | Cancelled
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+// ---- Lab Bills (Module 12/14) ----
+model LabBill {
+  id           Int          @id @default(autoincrement())
+  billId       String?      @unique
+  patientId    Int
+  patient      Patient      @relation(fields: [patientId], references: [id])
+  appointmentId Int?
+  appointment  Appointment? @relation(fields: [appointmentId], references: [id])
+  billDate     DateTime     @default(now())
+  referredBy   String?
+  items        Json         @default("[]")
+  subtotal     Float
+  discount     Float        @default(0)
+  discountType String       @default("fixed")
+  gstRate      Float        @default(0)
+  cgst         Float        @default(0)
+  sgst         Float        @default(0)
+  tax          Float        @default(0)
+  grandTotal   Float
+  amountPaid   Float        @default(0)
+  amountDue    Float        @default(0)
+  paymentMode  String?
+  payments     Json         @default("[]")
+  status       String       @default("Unpaid")
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  results LabResult[]
+}
+
+// ---- Pharmacy Bills (Module 11/14) ----
+model PharmacyBill {
+  id           Int          @id @default(autoincrement())
+  billId       String?      @unique
+  patientId    Int?
+  patient      Patient?     @relation(fields: [patientId], references: [id])
+  doctorId     Int?
+  doctor       Consultant?  @relation(fields: [doctorId], references: [id])
+  admissionId  Int?
+  admission    IPAdmission? @relation(fields: [admissionId], references: [id])
+  billDate     DateTime     @default(now())
+  items        Json         @default("[]")
+  subtotal     Float
+  discount     Float        @default(0)
+  discountType String       @default("fixed")
+  gstRate      Float        @default(0)
+  cgst         Float        @default(0)
+  sgst         Float        @default(0)
+  tax          Float        @default(0)
+  grandTotal   Float
+  amountPaid   Float        @default(0)
+  amountDue    Float        @default(0)
+  payments     Json         @default("[]")
+  paymentMode  String?
+  status       String       @default("Unpaid")
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  returns PharmacyReturn[]
+}
+
+// ---- Pharmacy Sales Returns (Module 11) ----
+// Records medicines returned from an already-issued pharmacy bill (Damage,
+// Expired, Not Required, Other). Returned stock is added back to inventory and
+// the returned amount is subtracted from the pharmacy sales/collection report.
+model PharmacyReturn {
+  id          Int            @id @default(autoincrement())
+  returnId    String?        @unique
+  billId      Int?
+  bill        PharmacyBill?  @relation(fields: [billId], references: [id])
+  patientId   Int?
+  patient     Patient?       @relation(fields: [patientId], references: [id])
+  returnDate  DateTime       @default(now())
+  items       Json           @default("[]")
+  reason      String         @default("Other") // Damage | Expired | Not Required | Other
+  subtotal    Float
+  gstRate     Float          @default(0)
+  cgst        Float          @default(0)
+  sgst        Float          @default(0)
+  tax         Float          @default(0)
+  totalAmount Float
+  refundMode  String?
+  refunded    Boolean        @default(false)
+  notes       String?
+  createdBy   String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+// ---- IP (Inpatient, Module 7) ----
+model IPAdmission {
+  id                   Int          @id @default(autoincrement())
+  admissionId          String?      @unique
+  patientId            Int
+  patient              Patient      @relation(fields: [patientId], references: [id])
+  consultantId         Int?
+  consultant           Consultant?  @relation(fields: [consultantId], references: [id])
+  wardId               Int?
+  ward                 Ward?        @relation(fields: [wardId], references: [id])
+  roomId               Int?
+  room                 Room?        @relation(fields: [roomId], references: [id])
+  bedId                Int?
+  bed                  Bed?         @relation(fields: [bedId], references: [id])
+  admissionDate        DateTime     @default(now())
+  admissionType        String       @default("General") // General | Emergency | Elective
+  wardName             String?
+  bedNumber            String?
+  roomType             String?
+  roomRate             Float        @default(0)
+  status               String       @default("Admitted") // Admitted | Discharged
+  provisionalDiagnosis String?
+  referredBy           String?
+  insuranceProvider    String?
+  insuranceNumber      String?
+  insuranceType        String       @default("Cash") // Cash | Insurance | Corporate | Other
+  transfers            Json         @default("[]")
+  dischargeDate        DateTime?
+  dischargeType        String?      // Recovered | Improved | Referred | AMA | Expired | Other
+  notes                String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  ipBills          IPBill[]
+  monitoring       IPMonitoring[]
+  ipCaseSheets     IPCaseSheet[]
+  dischargeSummary IPDischargeSummary?
+  pharmacyBills    PharmacyBill[]
+}
+
+// Catalog of chargeable components used in IP billing
+model IPBillComponent {
+  id         Int       @id @default(autoincrement())
+  code       String?
+  name       String
+  category   String    @default("Other") // Room | Doctor | Nursing | Procedure | Consumable | Lab | Other
+  rate       Float     @default(0)
+  gstRate    Float     @default(0)
+  unit       String    @default("day")
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model IPBill {
+  id           Int          @id @default(autoincrement())
+  billId       String?      @unique
+  admissionId  Int
+  admission    IPAdmission  @relation(fields: [admissionId], references: [id])
+  patientId    Int
+  patient      Patient      @relation(fields: [patientId], references: [id])
+  billDate     DateTime     @default(now())
+  items        Json         @default("[]")
+  subtotal     Float
+  discount     Float        @default(0)
+  discountType String       @default("fixed") // percentage | fixed
+  gstRate      Float        @default(0)
+  cgst         Float        @default(0)
+  sgst         Float        @default(0)
+  tax          Float        @default(0)
+  grandTotal   Float
+  amountPaid   Float        @default(0)
+  amountDue    Float        @default(0)
+  payments     Json         @default("[]")
+  paymentMode  String?
+  status       String       @default("Unpaid") // Paid | Partial | Unpaid | Cancelled
+  notes        String?
+  isAuto       Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model IPMonitoring {
+  id           Int       @id @default(autoincrement())
+  admissionId  Int
+  admission    IPAdmission @relation(fields: [admissionId], references: [id])
+  recordedAt   DateTime  @default(now())
+  recordedBy   String?
+  temperature  String?
+  pulse        String?
+  respiration  String?
+  bloodPressure String?
+  spo2         String?
+  weight       String?
+  urineOutput  String?
+  fluidIntake  String?
+  glucose      String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+}
+
+model IPCaseSheet {
+  id              Int         @id @default(autoincrement())
+  caseSheetId     String?     @unique
+  admissionId     Int
+  admission       IPAdmission @relation(fields: [admissionId], references: [id])
+  patientId       Int
+  patient         Patient     @relation(fields: [patientId], references: [id])
+  consultantId    Int?
+  consultant      Consultant? @relation(fields: [consultantId], references: [id])
+  date            DateTime    @default(now())
+  shift           String      @default("Morning")
+  complaints      String?
+  history         String?
+  examination     String?
+  diagnosis       String?
+  investigations  Json        @default("[]")
+  vitals          Json?
+  prescriptions   Json        @default("[]")
+  treatmentPlan   String?
+  notes           String?
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model IPDischargeSummary {
+  id                     Int         @id @default(autoincrement())
+  summaryId              String?     @unique
+  admissionId            Int         @unique
+  admission              IPAdmission @relation(fields: [admissionId], references: [id])
+  dischargeDate          DateTime    @default(now())
+  admittingDiagnosis     String?
+  finalDiagnosis         String?
+  conditionAtDischarge   String?
+  treatmentGiven         String?
+  investigationSummary   String?
+  procedureDone          String?
+  medicationsAtDischarge Json        @default("[]")
+  followUpAdvice         String?
+  dietAdvice             String?
+  dischargeInstructions  String?
+  referredTo             String?
+  consultantId           Int?
+  consultant             Consultant? @relation(fields: [consultantId], references: [id])
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+// ---- Lab Results (Module 12) ----
+model LabResult {
+  id               Int         @id @default(autoincrement())
+  resultId         String?     @unique
+  patientId        Int
+  patient          Patient     @relation(fields: [patientId], references: [id])
+  billId           Int?
+  bill             LabBill?    @relation(fields: [billId], references: [id])
+  referredBy       String?
+  sampleCollectedAt DateTime?
+  resultDate       DateTime    @default(now())
+  tests            Json        @default("[]")
+  status           String      @default("Pending") // Pending | Sample Collected | Completed | Abnormal
+  notes            String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+// ---- Radiology (Module 13: X-Ray, CT Scan, MRI, Ultrasound) ----
+model RadiologyTest {
+  id          Int       @id @default(autoincrement())
+  testId      String?   @unique
+  name        String
+  category    String    @default("X-Ray") // X-Ray | CT Scan | MRI | Ultrasound | Other
+  price       Float     @default(0)
+  gstRate     Float     @default(0)
+  preparation String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model RadiologyBill {
+  id           Int           @id @default(autoincrement())
+  billId       String?       @unique
+  patientId    Int
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  referredBy   String?
+  billDate     DateTime      @default(now())
+  items        Json          @default("[]")
+  subtotal     Float
+  discount     Float         @default(0)
+  discountType String        @default("fixed")
+  gstRate      Float         @default(0)
+  cgst         Float         @default(0)
+  sgst         Float         @default(0)
+  tax          Float         @default(0)
+  grandTotal   Float
+  amountPaid   Float         @default(0)
+  amountDue    Float         @default(0)
+  paymentMode  String?
+  payments     Json          @default("[]")
+  status       String        @default("Unpaid")
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  reports RadiologyReport[]
+}
+
+model RadiologyReport {
+  id          Int           @id @default(autoincrement())
+  reportId    String?       @unique
+  billId      Int
+  bill        RadiologyBill @relation(fields: [billId], references: [id])
+  patientId   Int
+  patient     Patient       @relation(fields: [patientId], references: [id])
+  reportDate  DateTime      @default(now())
+  testName    String?
+  findings    String?
+  impression  String?
+  images      Json          @default("[]")
+  radiologist String?
+  status      String        @default("Pending") // Pending | Completed
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// ---- Insurance (Module 16) ----
+model InsuranceCompany {
+  id            Int       @id @default(autoincrement())
+  companyCode   String?   @unique
+  name          String
+  address       String?
+  phone         String?
+  email         String?
+  tpaName       String?
+  contactPerson String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  claims InsuranceClaim[]
+}
+
+model InsuranceClaim {
+  id             Int              @id @default(autoincrement())
+  claimId        String?          @unique
+  companyId      Int
+  company        InsuranceCompany @relation(fields: [companyId], references: [id])
+  patientId      Int
+  patient        Patient          @relation(fields: [patientId], references: [id])
+  billType       String           // OP | IP | Lab | Pharmacy | Radiology
+  billId         Int?
+  policyNumber   String?
+  claimAmount    Float            @default(0)
+  approvedAmount Float?
+  status         String           @default("Submitted") // Submitted | Approved | Rejected | Settled
+  filedAt        DateTime         @default(now())
+  settledAt      DateTime?
+  notes          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+// ---- Payments (Module 15: Cash, UPI, Card, Insurance) ----
+model Payment {
+  id         Int      @id @default(autoincrement())
+  receiptId  String?  @unique
+  patientId  Int
+  patient    Patient  @relation(fields: [patientId], references: [id])
+  billType   String   // OP | IP | Lab | Pharmacy | Radiology
+  billId     Int
+  amount     Float
+  mode       String   @default("Cash") // Cash | UPI | Card | Insurance | Other
+  reference  String?
+  paidAt     DateTime @default(now())
+  receivedBy String?
+  notes      String?
+  createdAt  DateTime @default(now())
+}
+
+// ---- Hospital Settings (Module 20: Settings) ----
+model HospitalSetting {
+  id                    Int      @id @default(autoincrement())
+  hospitalName          String
+  address               String?
+  phone                 String?
+  alternatePhone        String?
+  email                 String?
+  website               String?
+  logo                  String?
+  footer                String?
+  registrationNumber    String?
+  gstNumber             String?
+  currencySymbol        String   @default("\u20B9")
+  timeZone              String   @default("Asia/Kolkata")
+  invoicePrefix         String   @default("INV")
+  patientPrefix         String   @default("PAT")
+  appointmentPrefix     String   @default("APT")
+  defaultConsultationFee Float   @default(0)
+  taxRate               Float    @default(0)
+  whatsappEnabled       Boolean  @default(false)
+  smsEnabled            Boolean  @default(false)
+  appointmentReminderEnabled Boolean @default(false)
+  reminderBeforeMinutes Int      @default(60)
+  emailEnabled          Boolean  @default(false)
+  emailSenderName       String?
+  emailHost             String?
+  emailPort             String?
+  emailUser             String?
+  emailPassword         String?
+  smsProvider           String?
+  smsApiKey             String?
+  smsSenderId           String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// ---- GRNs (Module 17: Inventory / 11: Pharmacy Purchase) ----
+model GRN {
+  id          Int       @id @default(autoincrement())
+  grnId       String?   @unique
+  supplierId  Int?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  grnDate     DateTime  @default(now())
+  items       Json      @default("[]")
+  totalAmount Float
+  invoiceRef  String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ---- Employees (Module 18: Staff Details, Attendance, Salary) ----
+model Employee {
+  id            Int       @id @default(autoincrement())
+  employeeId    String?   @unique
+  name          String
+  designation   String
+  department    String?
+  phone         String?
+  email         String?
+  address       String?
+  gender        String?
+  joinDate      DateTime?
+  salary        Float     @default(0)
+  bankName      String?
+  accountNumber String?
+  ifscCode      String?
+  userId        Int?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  attendance Attendance[]
+  salaries   Salary[]
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  date       DateTime
+  inTime     String?
+  outTime    String?
+  status     String   @default("Present") // Present | Absent | Leave | Half-Day | Holiday
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  @@unique([employeeId, date])
+}
+
+model Salary {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  month      Int
+  year       Int
+  basic      Float    @default(0)
+  allowance  Float    @default(0)
+  deduction  Float    @default(0)
+  netSalary  Float    @default(0)
+  status     String   @default("Pending") // Pending | Paid
+  paidAt     DateTime?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([employeeId, month, year])
+}

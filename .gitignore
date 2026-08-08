@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+
+# WhatsApp Web session
+.wwebjs_auth/
+backend/.wwebjs_auth/
+
+# WhatsApp cache
+.wwebjs_cache/
+
+# OS files
+.DS_Store
+Thumbs.db

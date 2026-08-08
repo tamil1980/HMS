@@ -1,0 +1,20 @@
+﻿const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const doc = new PDFDocument({ size: [400, 1000], margin: 30 });
+const out = fs.createWriteStream('test_resize2.pdf');
+doc.pipe(out);
+doc.font('Helvetica-Bold').fontSize(15).text('Long Hospital Name That Wraps', 200, 36, { width: 340, align: 'center' });
+doc.y += 60;
+doc.font('Helvetica').fontSize(10).text('detail line one');
+doc.font('Helvetica').fontSize(10).text('detail line two');
+doc.font('Helvetica').fontSize(10).text('detail line three');
+const newH = Math.ceil(doc.y + 30);
+console.log('final y:', doc.y, 'newH:', newH);
+doc.page.dictionary.data.MediaBox = [0, 0, 400, newH];
+doc.end();
+out.on('finish', () => {
+  const bytes = fs.readFileSync('test_resize2.pdf');
+  const text = bytes.toString('latin1');
+  const m = text.match(/\/MediaBox\s*\[([^\]]*)\]/);
+  console.log('MediaBox:', m ? m[1] : 'not found');
+});
