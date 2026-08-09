@@ -11,7 +11,20 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
     if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
+      let parsedUser;
+      try {
+        parsedUser = JSON.parse(savedUser);
+      } catch {
+        parsedUser = null;
+      }
+      if (!parsedUser || !parsedUser.id) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      setUser(parsedUser);
       authAPI.getMe().then(res => {
         setUser(res.data);
         localStorage.setItem('user', JSON.stringify(res.data));
