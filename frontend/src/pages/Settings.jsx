@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Upload, message, Typography, Row, Col, Divider, Switch, InputNumber, Space, Tag, Alert } from 'antd';
 import { UploadOutlined, SaveOutlined, WhatsAppOutlined, DisconnectOutlined, ThunderboltOutlined, SendOutlined } from '@ant-design/icons';
-import { settingAPI, reminderAPI } from '../services/api';
+import { settingAPI, reminderAPI, BACKEND_ORIGIN } from '../services/api';
 
 const { Title } = Typography;
+
+const fullUrl = (url) => (url && url.startsWith('/uploads') ? `${BACKEND_ORIGIN}${url}` : url);
 
 export default function Settings() {
   const [form] = Form.useForm();
@@ -18,7 +20,7 @@ export default function Settings() {
     settingAPI.get().then(res => {
       const data = res.data;
       form.setFieldsValue(data);
-      if (data.logo) setLogoUrl(data.logo);
+      if (data.logo) setLogoUrl(fullUrl(data.logo));
     }).catch(() => message.error('Failed to load settings'));
 
     const loadWa = () => {
@@ -43,7 +45,7 @@ export default function Settings() {
     formData.append('logo', file);
     try {
       const res = await settingAPI.uploadLogo(formData);
-      setLogoUrl(res.data.logo);
+      setLogoUrl(fullUrl(res.data.logo));
       message.success('Logo uploaded');
     } catch { message.error('Upload failed'); }
     return false;

@@ -1,0 +1,13 @@
+services:
+  - type: static
+    name: hms-frontend
+    rootDir: frontend
+    buildCommand: npm run build
+    publishPath: dist
+    redirects:
+      - source: /*
+        destination: /index.html
+        action: Rewrite
+    envVars:
+      - key: VITE_API_URL
+        value: https://hms-lijr.onrender.com/api

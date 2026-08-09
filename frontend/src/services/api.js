@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+export const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? 'https://hms-lijr.onrender.com/api' : '/api');
+
+export const BACKEND_ORIGIN = API_URL.replace(/\/api$/, '');
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
