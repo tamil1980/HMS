@@ -1,7 +1,6 @@
 # Dependencies
 node_modules/
-
-# Environment variables
+dist/
 .env
 .env.*
 !.env.example
@@ -24,8 +23,3 @@ backend/.wwebjs_auth/
 .DS_Store
 Thumbs.db
 
-node_modules/
-dist/
-.env
-.env.*
-!.env.example
