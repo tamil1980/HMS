@@ -23,3 +23,5 @@ backend/.wwebjs_auth/
 .DS_Store
 Thumbs.db
 
+.wwebjs_auth/
+.wwebjs_cache/
