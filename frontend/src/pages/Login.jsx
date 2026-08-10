@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Card, Typography, message, Space, Tabs, Select } from 'antd';
+import { Form, Input, Button, Card, Typography, message, Space, Tabs, Select, Alert } from 'antd';
 import { UserOutlined, LockOutlined, MedicineBoxOutlined, MailOutlined } from '@ant-design/icons';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
@@ -9,6 +9,7 @@ const { Title, Text } = Typography;
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
+  const [amcLock, setAmcLock] = useState(null);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -19,7 +20,9 @@ export default function Login() {
       message.success('Login successful');
       navigate('/dashboard');
     } catch (err) {
-      message.error(err.response?.data?.message || 'Login failed');
+      const data = err.response?.data;
+      if (data?.amcLocked) setAmcLock(data.message);
+      else message.error(data?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -39,6 +42,16 @@ export default function Login() {
             <Title level={3} style={{ margin: '12px 0 0' }}>VJS Soft Systems Hospital HMS</Title>
             <Text type="secondary">Sign in to your account</Text>
           </div>
+
+          {amcLock && (
+            <Alert
+              type="error"
+              showIcon
+              icon={<LockOutlined />}
+              message={amcLock}
+              style={{ textAlign: 'left' }}
+            />
+          )}
 
           <Tabs
             centered

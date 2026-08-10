@@ -709,6 +709,7 @@ model HospitalSetting {
   gstNumber             String?
   currencySymbol        String   @default("\u20B9")
   timeZone              String   @default("Asia/Kolkata")
+  amcExpiryDate         DateTime? // AMC lock: system locks after this date passes
   invoicePrefix         String   @default("INV")
   patientPrefix         String   @default("PAT")
   appointmentPrefix     String   @default("APT")

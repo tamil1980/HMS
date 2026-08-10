@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Card, Form, Input, Button, Upload, message, Typography, Row, Col, Divider, Switch, InputNumber, Space, Tag, Alert } from 'antd';
-import { UploadOutlined, SaveOutlined, WhatsAppOutlined, DisconnectOutlined, ThunderboltOutlined, SendOutlined } from '@ant-design/icons';
+import { Card, Form, Input, Button, Upload, message, Typography, Row, Col, Divider, Switch, InputNumber, Space, Tag, Alert, DatePicker } from 'antd';
+import { UploadOutlined, SaveOutlined, WhatsAppOutlined, DisconnectOutlined, ThunderboltOutlined, SendOutlined, LockOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { settingAPI, reminderAPI, BACKEND_ORIGIN } from '../services/api';
 
 const { Title } = Typography;
@@ -15,10 +16,15 @@ export default function Settings() {
   const [waLoading, setWaLoading] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [testMsg, setTestMsg] = useState('');
+  const [amcExpired, setAmcExpired] = useState(false);
 
   useEffect(() => {
     settingAPI.get().then(res => {
       const data = res.data;
+      if (data.amcExpiryDate) {
+        data.amcExpiryDate = dayjs(data.amcExpiryDate);
+        setAmcExpired(dayjs().isAfter(dayjs(data.amcExpiryDate).endOf('day')));
+      }
       form.setFieldsValue(data);
       if (data.logo) setLogoUrl(fullUrl(data.logo));
     }).catch(() => message.error('Failed to load settings'));
@@ -32,6 +38,11 @@ export default function Settings() {
   }, []);
 
   const onFinish = async (values) => {
+    if (values.amcExpiryDate) {
+      values.amcExpiryDate = values.amcExpiryDate.toISOString();
+    } else {
+      values.amcExpiryDate = null;
+    }
     setLoading(true);
     try {
       await settingAPI.update(values);
@@ -192,6 +203,26 @@ export default function Settings() {
               <Button icon={<SendOutlined />} onClick={handleSendTest}>Send Test</Button>
             </Space>
           </Space>
+
+          <Divider>AMC Lock</Divider>
+          <Alert
+            type={amcExpired ? 'error' : 'info'}
+            showIcon
+            icon={<LockOutlined />}
+            style={{ marginBottom: 16 }}
+            message={amcExpired ? 'AMC has expired - the system is locked. Update the date to restore access.' : 'System remains usable through the end of the selected date. After that, login is blocked with: "Please recharge AMC as soon as possible".'}
+          />
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="amcExpiryDate"
+                label="AMC Expiry Date"
+                extra="Leave empty to disable the lock."
+              >
+                <DatePicker showTime style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Divider>Footer / Receipt Footer</Divider>
           <Form.Item name="footer" label="Footer Text"><Input.TextArea rows={3} /></Form.Item>

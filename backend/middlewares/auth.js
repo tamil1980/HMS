@@ -1,4 +1,5 @@
 const prisma = require('../db/prisma');
+const { getAmcLockMessage } = require('../utils/amcLock');
 
 const auth = async (req, res, next) => {
   try {
@@ -7,6 +8,9 @@ const auth = async (req, res, next) => {
 
     const user = await prisma.user.findUnique({ where: { authToken: token } });
     if (!user) return res.status(401).json({ message: 'Invalid token' });
+
+    const amcLockMessage = await getAmcLockMessage();
+    if (amcLockMessage) return res.status(403).json({ message: amcLockMessage, amcLocked: true });
 
     delete user.password;
     req.user = user;

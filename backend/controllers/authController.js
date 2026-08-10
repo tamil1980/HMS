@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const prisma = require('../db/prisma');
 const { toApi } = require('../utils/serialize');
+const { getAmcLockMessage } = require('../utils/amcLock');
 
 const generateToken = () => crypto.randomBytes(32).toString('hex');
 
@@ -14,6 +15,9 @@ exports.login = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const amcLockMessage = await getAmcLockMessage();
+    if (amcLockMessage) return res.status(403).json({ message: amcLockMessage, amcLocked: true });
 
     const token = generateToken();
     await prisma.user.update({
