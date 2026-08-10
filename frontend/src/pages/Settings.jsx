@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Form, Input, Button, Upload, message, Typography, Row, Col, Divider, Switch, InputNumber, Space, Tag, Alert, DatePicker } from 'antd';
+import { Card, Form, Input, Button, Upload, message, Typography, Row, Col, Divider, Switch, InputNumber, Space, Tag, Alert, DatePicker, Table } from 'antd';
 import { UploadOutlined, SaveOutlined, WhatsAppOutlined, DisconnectOutlined, ThunderboltOutlined, SendOutlined, LockOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { settingAPI, reminderAPI, BACKEND_ORIGIN } from '../services/api';
@@ -150,26 +150,45 @@ export default function Settings() {
             style={{ marginBottom: 16 }}
             message="Automatic WhatsApp reminders are sent to the patient's mobile number before their appointment time."
           />
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="appointmentReminderEnabled" label="Send Reminders" valuePropName="checked">
-                <Switch checkedChildren="On" unCheckedChildren="Off" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="reminderBeforeMinutes" label="Minutes Before Appointment">
-                <InputNumber min={5} max={10080} style={{ width: '100%' }} addonAfter="min" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item label=" " colon={false}>
-                <Space>
-                  <Button icon={<ThunderboltOutlined />} onClick={handleRunNow}>Run Check Now</Button>
-                  <Button onClick={onFinish} htmlType="submit" loading={loading} icon={<SaveOutlined />}>Save Settings</Button>
-                </Space>
-              </Form.Item>
-            </Col>
-          </Row>
+          <Table
+            bordered
+            size="small"
+            pagination={false}
+            columns={[
+              { title: 'Setting', dataIndex: 'setting', width: 240 },
+              { title: 'Value', dataIndex: 'control' },
+            ]}
+            dataSource={[
+              {
+                key: 'enabled',
+                setting: 'Send Reminders',
+                control: (
+                  <Form.Item name="appointmentReminderEnabled" valuePropName="checked" style={{ marginBottom: 0 }}>
+                    <Switch checkedChildren="On" unCheckedChildren="Off" />
+                  </Form.Item>
+                ),
+              },
+              {
+                key: 'minutes',
+                setting: 'Minutes Before Appointment',
+                control: (
+                  <Form.Item name="reminderBeforeMinutes" style={{ marginBottom: 0 }}>
+                    <InputNumber min={5} max={10080} style={{ width: '100%' }} addonAfter="min" />
+                  </Form.Item>
+                ),
+              },
+              {
+                key: 'actions',
+                setting: 'Actions',
+                control: (
+                  <Space>
+                    <Button size="small" icon={<ThunderboltOutlined />} onClick={handleRunNow}>Run Check Now</Button>
+                    <Button size="small" type="primary" htmlType="submit" loading={loading} icon={<SaveOutlined />}>Save Settings</Button>
+                  </Space>
+                ),
+              },
+            ]}
+          />
 
           <Divider>WhatsApp Connection</Divider>
           {waStatus && (
