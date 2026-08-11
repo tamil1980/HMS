@@ -107,7 +107,7 @@ export default function PharmacyReturns() {
       <Modal title={`Return ${viewItem?.returnId || ''}`} open={!!viewItem} onCancel={() => setViewItem(null)} footer={null} width={680}>
         {viewItem && (
           <>
-            <Descriptions size="small" column={2} style={{ marginBottom: 12 }}>
+            <Descriptions size="small" column={{ xs: 1, sm: 2 }} style={{ marginBottom: 12 }}>
               <Descriptions.Item label="Bill No">{viewItem.bill?.billId || '-'}</Descriptions.Item>
               <Descriptions.Item label="Patient">{viewItem.patient?.name || '-'}</Descriptions.Item>
               <Descriptions.Item label="Date">{dayjs(viewItem.returnDate).format('DD/MM/YYYY')}</Descriptions.Item>

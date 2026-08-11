@@ -69,43 +69,43 @@ export default function Dashboard() {
       </div>
 
       <Row gutter={[16, 16]}>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="Total Patients" value={stats.totalPatients} icon={<TeamOutlined />} color="#2563EB" bg="linear-gradient(135deg,#2563EB,#1d4ed8)" onClick={() => navigate('/op-registration')} />
         </Col>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="Consultants" value={stats.totalConsultants} icon={<MedicineBoxOutlined />} color="#7C3AED" bg="linear-gradient(135deg,#7C3AED,#6d28d9)" onClick={() => navigate('/consultants')} />
         </Col>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="Today's Appointments" value={stats.todayAppointments} icon={<CalendarOutlined />} color="#059669" bg="linear-gradient(135deg,#059669,#047857)" onClick={() => navigate('/appointments')} />
         </Col>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="Today's Revenue" value={stats.todayRevenue} icon={<DollarOutlined />} color="#D97706" bg="linear-gradient(135deg,#D97706,#b45309)" />
         </Col>
       </Row>
 
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="Lab Bills (Today)" value={stats.labBillsToday} icon={<ExperimentOutlined />} color="#DB2777" bg="linear-gradient(135deg,#DB2777,#be185d)" onClick={() => navigate('/lab/bills')} />
         </Col>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="Lab Revenue (Today)" value={stats.labRevenueToday} icon={<DollarOutlined />} color="#E11D48" bg="linear-gradient(135deg,#E11D48,#be123c)" />
         </Col>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="Pharmacy Bills (Today)" value={stats.pharmacyBillsToday} icon={<ShoppingCartOutlined />} color="#059669" bg="linear-gradient(135deg,#059669,#047857)" onClick={() => navigate('/pharmacy/bills')} />
         </Col>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="Pharmacy Revenue (Today)" value={stats.pharmacyRevenueToday} icon={<MedicineBoxOutlined />} color="#16A34A" bg="linear-gradient(135deg,#16A34A,#15803d)" sub={stats.pharmacyReturnsToday ? `Returns: -₹${stats.pharmacyReturnsToday}` : undefined} />
         </Col>
       </Row>
 
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="IP Patients (Admitted)" value={stats.activeAdmissions} icon={<HomeOutlined />} color="#DC2626" bg="linear-gradient(135deg,#DC2626,#b91c1c)" onClick={() => navigate('/ip/admissions')} />
         </Col>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="IP Revenue (Today)" value={stats.todayIP} icon={<DollarOutlined />} color="#0D9488" bg="linear-gradient(135deg,#0D9488,#0f766e)" />
         </Col>
-        <Col xs={12} sm={12} md={6}>
+        <Col xs={24} sm={12} md={6}>
           <StatCard title="IP Revenue (Month)" value={stats.ipRevenueMonth} icon={<RiseOutlined />} color="#9333EA" bg="linear-gradient(135deg,#9333EA,#7e22ce)" />
         </Col>
       </Row>
@@ -115,32 +115,32 @@ export default function Dashboard() {
           <Card title={<span><DollarOutlined style={{ marginRight: 6 }} />Monthly Revenue</span>} style={cardStyle}
             extra={<Tag color="blue">This Month: ₹{stats.monthlyRevenue}</Tag>}>
             <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-              <Col xs={12} sm={8} md={4} lg={4}>
+              <Col xs={24} sm={12} md={4} lg={4}>
                 <div style={{ background: '#eff6ff', borderRadius: 10, padding: '12px 16px' }}>
                   <Text type="secondary">Consultation</Text>
                   <div style={{ fontSize: 22, fontWeight: 700, color: '#2563EB' }}>₹{stats.monthlyRevenue}</div>
                 </div>
               </Col>
-              <Col xs={12} sm={8} md={4} lg={4}>
+              <Col xs={24} sm={12} md={4} lg={4}>
                 <div style={{ background: '#fdf2f8', borderRadius: 10, padding: '12px 16px' }}>
                   <Text type="secondary">Lab</Text>
                   <div style={{ fontSize: 22, fontWeight: 700, color: '#DB2777' }}>₹{stats.labRevenueMonth}</div>
                 </div>
               </Col>
-              <Col xs={12} sm={8} md={4} lg={4}>
+              <Col xs={24} sm={12} md={4} lg={4}>
                 <div style={{ background: '#ecfdf5', borderRadius: 10, padding: '12px 16px' }}>
                   <Text type="secondary">Pharmacy</Text>
                   <div style={{ fontSize: 22, fontWeight: 700, color: '#059669' }}>₹{stats.pharmacyRevenueMonth}</div>
                   {stats.pharmacyReturnsMonth ? <Text type="secondary" style={{ fontSize: 12 }}>Returns -₹{stats.pharmacyReturnsMonth}</Text> : null}
                 </div>
               </Col>
-              <Col xs={12} sm={8} md={4} lg={4}>
+              <Col xs={24} sm={12} md={4} lg={4}>
                 <div style={{ background: '#eef2ff', borderRadius: 10, padding: '12px 16px' }}>
                   <Text type="secondary">Radiology</Text>
                   <div style={{ fontSize: 22, fontWeight: 700, color: '#6366F1' }}>₹{stats.radiologyRevenueMonth}</div>
                 </div>
               </Col>
-              <Col xs={12} sm={8} md={4} lg={4}>
+              <Col xs={24} sm={12} md={4} lg={4}>
                 <div style={{ background: '#fef2f2', borderRadius: 10, padding: '12px 16px' }}>
                   <Text type="secondary">IP</Text>
                   <div style={{ fontSize: 22, fontWeight: 700, color: '#DC2626' }}>₹{stats.ipRevenueMonth}</div>

@@ -30,7 +30,7 @@ export default function Login() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)' }}>
-      <Card style={{ width: 420, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', borderRadius: 12 }}>
+      <Card style={{ width: 420, maxWidth: 'calc(100vw - 24px)', margin: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', borderRadius: 12 }}>
         <Space direction="vertical" size="large" style={{ width: '100%', textAlign: 'center' }}>
           <div>
             <svg width="90" height="90" viewBox="0 0 100 100" style={{ display: 'block', margin: '0 auto' }}>

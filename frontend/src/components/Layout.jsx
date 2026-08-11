@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, Typography, Modal, Form, Input, message } from 'antd';
+import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, Typography, Modal, Form, Input, message, Drawer } from 'antd';
 import {
   DashboardOutlined, UserOutlined, TeamOutlined, CalendarOutlined,
   FileTextOutlined, DollarOutlined, FundOutlined, AppstoreOutlined,
   SettingOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
-  MedicineBoxOutlined, ExperimentOutlined, ShopOutlined,
+  MenuOutlined, MedicineBoxOutlined, ExperimentOutlined, ShopOutlined,
   FileDoneOutlined, InboxOutlined, DatabaseOutlined, HomeOutlined,
   HeartOutlined, FilePdfOutlined, AuditOutlined, IdcardOutlined,
   InsuranceOutlined, CreditCardOutlined, BarChartOutlined, BankOutlined,
@@ -185,10 +185,19 @@ const filterMenu = (items, role) => {
 
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -213,53 +222,87 @@ export default function Layout() {
     ],
   };
 
+  const menu = (
+    <Menu theme={isMobile ? 'light' : 'dark'} mode="inline" selectedKeys={[selectedKey]}
+      defaultOpenKeys={openKey ? [openKey] : []}
+      items={menuItems}
+      onClick={({ key }) => {
+        navigate(key);
+        if (isMobile) setDrawerOpen(false);
+      }} />
+  );
+
   return (
-    <AntLayout style={{ minHeight: '100vh' }}>
-      <Sider trigger={null} collapsible collapsed={collapsed} theme="dark"
-        style={{ boxShadow: '2px 0 8px rgba(0,0,0,0.05)' }}>
-        <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          {!collapsed && (
+    <AntLayout style={{ minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
+      {!isMobile && (
+        <Sider trigger={null} collapsible collapsed={collapsed} theme="dark"
+          style={{ boxShadow: '2px 0 8px rgba(0,0,0,0.05)' }}>
+          <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            {!collapsed && (
+              <svg width="22" height="22" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="48" fill="#2563EB" />
+                <circle cx="50" cy="50" r="38" fill="#fff" />
+                <rect x="42" y="20" width="16" height="60" rx="4" fill="#ef4444" />
+                <rect x="20" y="42" width="60" height="16" rx="4" fill="#ef4444" />
+              </svg>
+            )}
+            <Text strong style={{ color: '#fff', fontSize: collapsed ? 14 : 16, whiteSpace: 'nowrap' }}>
+              {collapsed ? 'VJ' : 'VJS Soft Systems'}
+            </Text>
+          </div>
+          {menu}
+        </Sider>
+      )}
+      <AntLayout style={{ minWidth: 0 }}>
+        <Header style={{ background: '#fff', padding: isMobile ? '0 8px' : '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', gap: 8 }}>
+          <Button type="text" icon={isMobile ? <MenuOutlined /> : (collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />)}
+            onClick={isMobile ? () => setDrawerOpen(true) : () => setCollapsed(!collapsed)} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, justifyContent: 'center', minWidth: 0, padding: '0 4px' }}>
+            {!isMobile && (
+              <svg width="30" height="30" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="48" fill="#2563EB" />
+                <circle cx="50" cy="50" r="38" fill="#fff" />
+                <rect x="42" y="20" width="16" height="60" rx="4" fill="#ef4444" />
+                <rect x="20" y="42" width="60" height="16" rx="4" fill="#ef4444" />
+              </svg>
+            )}
+            <Text strong style={{ fontSize: isMobile ? 14 : 18, color: '#2563EB', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {isMobile ? 'VJS HMS' : 'Hospital Management Solution'}
+            </Text>
+          </div>
+          <Dropdown menu={userMenu} placement="bottomRight">
+            <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#2563EB', flexShrink: 0 }} />
+              {!isMobile && <Text style={{ whiteSpace: 'nowrap' }}>{user?.name}</Text>}
+              {!isMobile && <Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>({user?.role})</Text>}
+            </div>
+          </Dropdown>
+        </Header>
+        <Content style={{ margin: isMobile ? 12 : 24, minHeight: 280, minWidth: 0 }}>
+          <Outlet />
+        </Content>
+      </AntLayout>
+
+      <Drawer
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <svg width="22" height="22" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="48" fill="#2563EB" />
               <circle cx="50" cy="50" r="38" fill="#fff" />
               <rect x="42" y="20" width="16" height="60" rx="4" fill="#ef4444" />
               <rect x="20" y="42" width="60" height="16" rx="4" fill="#ef4444" />
             </svg>
-          )}
-          <Text strong style={{ color: '#fff', fontSize: collapsed ? 14 : 16, whiteSpace: 'nowrap' }}>
-            {collapsed ? 'VJ' : 'VJS Soft Systems'}
-          </Text>
-        </div>
-        <Menu theme="dark" mode="inline" selectedKeys={[selectedKey]}
-          defaultOpenKeys={openKey ? [openKey] : []}
-          items={menuItems}
-          onClick={({ key }) => navigate(key)} />
-      </Sider>
-      <AntLayout>
-        <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-          <Button type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-            <svg width="34" height="34" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="48" fill="#2563EB" />
-              <circle cx="50" cy="50" r="38" fill="#fff" />
-              <rect x="42" y="20" width="16" height="60" rx="4" fill="#ef4444" />
-              <rect x="20" y="42" width="60" height="16" rx="4" fill="#ef4444" />
-            </svg>
-            <Text strong style={{ fontSize: 18, color: '#2563EB' }}>Hospital Management Solution</Text>
+            <Text strong>VJS Soft Systems</Text>
           </div>
-          <Dropdown menu={userMenu} placement="bottomRight">
-            <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#2563EB' }} />
-              <Text>{user?.name}</Text>
-              <Text type="secondary" style={{ fontSize: 12 }}>({user?.role})</Text>
-            </div>
-          </Dropdown>
-        </Header>
-        <Content style={{ margin: 24, minHeight: 280 }}>
-          <Outlet />
-        </Content>
-      </AntLayout>
+        }
+        placement="left"
+        width={280}
+        open={isMobile && drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        styles={{ body: { padding: 0 } }}
+      >
+        {menu}
+      </Drawer>
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </AntLayout>

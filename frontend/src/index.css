@@ -1,0 +1,86 @@
+html,
+body,
+#root {
+  overflow-x: hidden;
+}
+
+.ant-layout {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ant-layout-sider {
+  min-width: 0 !important;
+}
+
+@media (max-width: 767px) {
+  .ant-card-body {
+    padding: 12px;
+  }
+
+  /* Stack every form column full-width so no field is ever cramped */
+  .ant-form .ant-row > .ant-col {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Keep small action/delete buttons compact instead of full-width */
+  .ant-form .ant-row > .ant-col:has(> .ant-btn) {
+    flex: 0 0 auto !important;
+    max-width: none !important;
+    width: auto !important;
+  }
+
+  .ant-modal-content {
+    padding: 16px;
+  }
+
+  .ant-modal-header {
+    padding: 16px 16px 8px;
+  }
+
+  .ant-modal-body {
+    padding: 16px;
+  }
+
+  .ant-modal-footer {
+    padding: 8px 16px 16px;
+  }
+
+  /* Let page-header style flex rows wrap instead of overflowing */
+  .ant-card-body > div[style*='display:flex'] {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Keep toolbars scrollable horizontally instead of breaking layout */
+  .ant-space {
+    flex-wrap: wrap;
+  }
+
+  /* Slightly tighter tables for small screens */
+  .ant-table-cell {
+    font-size: 12px;
+    padding: 8px 6px !important;
+  }
+
+  .ant-table .ant-btn {
+    padding: 0 5px;
+  }
+
+  .ant-pagination {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .ant-descriptions-view .ant-descriptions-item-label,
+  .ant-descriptions-view .ant-descriptions-item-content {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 575px) {
+  .ant-picker {
+    width: 100%;
+  }
+}

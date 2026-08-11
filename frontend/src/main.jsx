@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import { AuthProvider } from './context/AuthContext';
 import App from './App';
+import './index.css';
 
 const theme = {
   token: {

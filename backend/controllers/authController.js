@@ -19,11 +19,13 @@ exports.login = async (req, res) => {
     const amcLockMessage = await getAmcLockMessage();
     if (amcLockMessage) return res.status(403).json({ message: amcLockMessage, amcLocked: true });
 
-    const token = generateToken();
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { authToken: token },
-    });
+    const token = user.authToken || generateToken();
+    if (!user.authToken) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { authToken: token },
+      });
+    }
 
     res.json({
       token,

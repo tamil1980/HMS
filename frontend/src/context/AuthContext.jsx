@@ -25,13 +25,15 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       setUser(parsedUser);
-      authAPI.getMe().then(res => {
+      authAPI.getMe({ timeout: 10000 }).then(res => {
         setUser(res.data);
         localStorage.setItem('user', JSON.stringify(res.data));
-      }).catch(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
+      }).catch(err => {
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
       }).finally(() => setLoading(false));
     } else {
       setLoading(false);

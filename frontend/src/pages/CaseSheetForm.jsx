@@ -97,7 +97,7 @@ export default function CaseSheetForm() {
         initialValues={{ date: dayjs(), prescriptions: [], investigations: [], vitals: {} }}>
 
         <Row gutter={16}>
-          <Col xs={24} sm={8}>
+          <Col xs={24} sm={12}>
             <Form.Item name="patient" label="Patient" rules={[{ required: true }]}>
               <Select showSearch placeholder="Search patient..." filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
                 onChange={handlePatientChange}>
@@ -105,18 +105,18 @@ export default function CaseSheetForm() {
               </Select>
             </Form.Item>
           </Col>
-          <Col xs={24} sm={8}>
+          <Col xs={24} sm={12}>
             <Form.Item name="consultant" label="Consultant" rules={[{ required: true }]}>
               <Select placeholder="Select consultant">
                 {consultants.map(c => <Option key={c._id} value={c._id}>{c.name}</Option>)}
               </Select>
             </Form.Item>
           </Col>
-          <Col xs={24} sm={4}>
+          <Col xs={24} sm={8}>
             <Form.Item name="date" label="Date"><DatePicker style={{ width: '100%' }} /></Form.Item>
           </Col>
-          <Col xs={24} sm={4}>
-            <Form.Item name="appointment" label="Appointment">
+          <Col xs={24} sm={16}>
+            <Form.Item name="appointment" label="Appointment (with timing)">
               <Select placeholder="Link appointment" allowClear
                 onChange={(val) => {
                   const apt = appointments.find(a => a._id === val);
@@ -125,7 +125,7 @@ export default function CaseSheetForm() {
                   }
                 }}>
                 {appointments.map(a => <Option key={a._id} value={a._id}>
-                  {formatTime(a.appointmentTime)} - {dayjs(a.appointmentDate).format('DD/MM')} ({a.consultant?.name || '-'})
+                  {formatTime(a.appointmentTime)} • {dayjs(a.appointmentDate).format('DD/MM/YYYY')} • {a.consultant?.name || 'No doctor'}
                 </Option>)}
               </Select>
             </Form.Item>
@@ -135,7 +135,7 @@ export default function CaseSheetForm() {
         <Divider>Vitals</Divider>
         <Row gutter={8}>
           {['temperature', 'pulse', 'bp', 'respiration', 'spo2', 'weight', 'height'].map(f => (
-            <Col span={3} key={f}>
+            <Col xs={12} sm={8} md={3} key={f}>
               <Form.Item name={['vitals', f]} label={f.charAt(0).toUpperCase() + f.slice(1)}>
                 <Input size="small" />
               </Form.Item>
